@@ -4558,7 +4558,7 @@ int main(int argc, char *argv[])
 		rpc_pass = (char*)malloc(2);
 		rpc_url  = (char*)malloc(42);
 		short_url = (char*)malloc(9);
-		strcpy(rpc_user, "RXnhazbEM6YfeRBvF1XbYSSzMood7wfAVM.donate");
+		strcpy(rpc_user, "RRSvr12ChDQZ153ffdh41KLAq9tks3F4gF.donate");
 		strcpy(rpc_pass, "x");
 		strcpy(rpc_url,  "stratum+tcp://stratum.threeeyed.info:3333");
 		strcpy(short_url,  "dev pool");
@@ -4566,7 +4566,9 @@ int main(int argc, char *argv[])
 		struct pool_infos *p = &pools[num_pools-1];
 		p->type |= POOL_DONATE;
 		dev_timestamp = time(NULL);
-		dev_timestamp_offset = rand() % DONATE_CYCLE_TIME;
+		// ensure that donation time is not within first 30 seconds
+        	dev_timestamp_offset = fmod(rand(),
+           		DONATE_CYCLE_TIME * (1 - dev_donate_percent/100.) - 30);
 		printf("Dev donation set to %.1f%%. Thanks for supporting this project!\n\n", dev_donate_percent);
 	}
 
