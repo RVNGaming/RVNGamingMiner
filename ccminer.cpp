@@ -833,9 +833,9 @@ static bool work_decode(const json_t *val, struct work *work)
 	return true;
 }
 
-#define YES "yes!"
-#define YAY "yay!!!"
-#define BOO "booooo"
+#define YES "Win!"
+#define YAY "Seeker!!!"
+#define BOO "Lose!"
 
 int share_result(int result, int pooln, double sharediff, const char *reason)
 {
@@ -4275,7 +4275,7 @@ void parse_arg(int key, char *arg)
 		if (d < 0.)
 			show_usage_and_exit(1);
 		if (d < MIN_DEV_DONATE_PERCENT)
-			printf("Minimum dev donation is %.1f%%.\n",
+			printf("Minimum dev donation is %.1f%%.\n to the RVNGaming dev wallet",
 				(double)MIN_DEV_DONATE_PERCENT);
 		else if (d >= 100)
 			dev_donate_percent = 100;
@@ -4482,6 +4482,7 @@ int main(int argc, char *argv[])
 	parse_single_opt('q', argc, argv);
 
 	printf("*** nevermore " PACKAGE_VERSION " for nVidia GPUs by brian112358@github ***\n");
+	printf("RVNGaming Community Edition - http://github.com/RVNGaming\n");
 	if (!opt_quiet) {
 		const char* arch = is_x64() ? "64-bits" : "32-bits";
 #ifdef _MSC_VER
@@ -4551,6 +4552,7 @@ int main(int argc, char *argv[])
 		printf("RVN donation address: RYKaoWqR5uahFioNvxabQtEBjNkBmRoRdg (alexis78)\n\n");
 		printf("BTC donation address: 1FHLroBZaB74QvQW5mBmAxCNVJNXa14mH5 (brianmct)\n");
 		printf("RVN donation address: RWoSZX6j6WU6SVTVq5hKmdgPmmrYE9be5R (brianmct)\n\n");
+		printf("RVN donation address: RRSvr12ChDQZ153ffdh41KLAq9tks3F4gF (RVNGaming)\n\n");
 	}
 	else {
 		// Set dev pool credentials.
@@ -4569,7 +4571,7 @@ int main(int argc, char *argv[])
 		// ensure that donation time is not within first 30 seconds
         	dev_timestamp_offset = fmod(rand(),
            		DONATE_CYCLE_TIME * (1 - dev_donate_percent/100.) - 30);
-		printf("Dev donation set to %.1f%%. Thanks for supporting this project!\n\n", dev_donate_percent);
+		printf("Dev donation set to %.1f%% to the RVNGaming dev wallet\n\n", dev_donate_percent);
 	}
 
 	if (!opt_benchmark && !strlen(rpc_url)) {
