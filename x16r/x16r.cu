@@ -31,7 +31,7 @@ extern "C" {
 
 #include "miner.h"
 #include "cuda_helper.h"
-#include "cuda_x16.h"
+#include "cuda_x16r.h"
 
 static uint32_t *d_hash[MAX_GPUS];
 
@@ -217,12 +217,24 @@ extern "C" void x16r_hash(void *output, const void *input)
 	memcpy(output, hash, 32);
 }
 
+void whirlpool_midstate(void *state, const void *input)
+{
+	sph_whirlpool_context ctx;
+
+	sph_whirlpool_init(&ctx);
+	sph_whirlpool(&ctx, input, 64);
+
+	memcpy(state, ctx.state, 64);
+}
+
 static bool init[MAX_GPUS] = { 0 };
 
 //#define _DEBUG
 #define _DEBUG_PREFIX "x16r-"
 #include "cuda_debug.cuh"
 
+//static int algo80_tests[HASH_FUNC_COUNT] = { 0 };
+//static int algo64_tests[HASH_FUNC_COUNT] = { 0 };
 static int algo80_fails[HASH_FUNC_COUNT] = { 0 };
 
 extern "C" int scanhash_x16r(int thr_id, struct work* work, uint32_t max_nonce, unsigned long *hashes_done)
@@ -232,8 +244,9 @@ extern "C" int scanhash_x16r(int thr_id, struct work* work, uint32_t max_nonce, 
 	const uint32_t first_nonce = pdata[19];
 	const int dev_id = device_map[thr_id];
 	int intensity = (device_sm[dev_id] > 500 && !is_windows()) ? 20 : 19;
-	if (strstr(device_name[dev_id], "GTX 1080")) intensity = 19;
+	if (strstr(device_name[dev_id], "GTX 1080")) intensity = 20;
 	uint32_t throughput = cuda_default_throughput(thr_id, 1U << intensity);
+	//if (init[thr_id]) throughput = min(throughput, max_nonce - first_nonce);
 
 	if (!init[thr_id])
 	{
@@ -530,6 +543,25 @@ extern "C" int scanhash_x16r(int thr_id, struct work* work, uint32_t max_nonce, 
 				} else {
 					pdata[19] = work->nonces[0] + 1; // cursor
 				}
+#if 0
+				gpulog(LOG_INFO, thr_id, "hash found with %s 80!", algo_strings[algo80]);
+
+				algo80_tests[algo80] += work->valid_nonces;
+				char oks64[128] = { 0 };
+				char oks80[128] = { 0 };
+				char fails[128] = { 0 };
+				for (int a = 0; a < HASH_FUNC_COUNT; a++) {
+					const char elem = hashOrder[a];
+					const uint8_t algo64 = elem >= 'A' ? elem - 'A' + 10 : elem - '0';
+					if (a > 0) algo64_tests[algo64] += work->valid_nonces;
+					sprintf(&oks64[strlen(oks64)], "|%X:%2d", a, algo64_tests[a] < 100 ? algo64_tests[a] : 99);
+					sprintf(&oks80[strlen(oks80)], "|%X:%2d", a, algo80_tests[a] < 100 ? algo80_tests[a] : 99);
+					sprintf(&fails[strlen(fails)], "|%X:%2d", a, algo80_fails[a] < 100 ? algo80_fails[a] : 99);
+				}
+				applog(LOG_INFO, "K64: %s", oks64);
+				applog(LOG_INFO, "K80: %s", oks80);
+				applog(LOG_ERR,  "F80: %s", fails);
+#endif
 				return work->valid_nonces;
 			}
 			else if (vhash[7] > Htarg) {
@@ -574,6 +606,7 @@ extern "C" void free_x16r(int thr_id)
 	quark_blake512_cpu_free(thr_id);
 	quark_groestl512_cpu_free(thr_id);
 	x11_simd512_cpu_free(thr_id);
+	x13_fugue512_cpu_free(thr_id);
 	x16_fugue512_cpu_free(thr_id); // to merge with x13_fugue512 ?
 	x15_whirlpool_cpu_free(thr_id);
 
